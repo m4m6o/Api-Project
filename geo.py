@@ -1,33 +1,32 @@
 import requests
 import math
  
- 
 def get_coordinates(city_name):
     try:
-        # url, по которому доступно API Яндекс.Карт
+        # url, ГЇГ® ГЄГ®ГІГ®Г°Г®Г¬Гі Г¤Г®Г±ГІГіГЇГ­Г® API ГџГ­Г¤ГҐГЄГ±.ГЉГ Г°ГІ
         url = "https://geocode-maps.yandex.ru/1.x/"
-        # параметры запроса
+        # ГЇГ Г°Г Г¬ГҐГІГ°Г» Г§Г ГЇГ°Г®Г±Г 
         params = {
-            # город, координаты которого мы ищем
+            # ГЈГ®Г°Г®Г¤, ГЄГ®Г®Г°Г¤ГЁГ­Г ГІГ» ГЄГ®ГІГ®Г°Г®ГЈГ® Г¬Г» ГЁГ№ГҐГ¬
             'geocode': city_name,
-            # формат ответа от сервера, в данном случае JSON
+            # ГґГ®Г°Г¬Г ГІ Г®ГІГўГҐГІГ  Г®ГІ Г±ГҐГ°ГўГҐГ°Г , Гў Г¤Г Г­Г­Г®Г¬ Г±Г«ГіГ·Г ГҐ JSON
             'format': 'json'
         }
-        # отправляем запрос
+        # Г®ГІГЇГ°Г ГўГ«ГїГҐГ¬ Г§Г ГЇГ°Г®Г±
         response = requests.get(url, params)
-        # получаем JSON ответа
+        # ГЇГ®Г«ГіГ·Г ГҐГ¬ JSON Г®ГІГўГҐГІГ 
         json = response.json()
-        # получаем координаты города (там написаны долгота(longitude),
-        # широта(latitude) через пробел).
-        # Посмотреть подробное описание JSON-ответа можно
-        # в документации по адресу
+        # ГЇГ®Г«ГіГ·Г ГҐГ¬ ГЄГ®Г®Г°Г¤ГЁГ­Г ГІГ» ГЈГ®Г°Г®Г¤Г  (ГІГ Г¬ Г­Г ГЇГЁГ±Г Г­Г» Г¤Г®Г«ГЈГ®ГІГ (longitude),
+        # ГёГЁГ°Г®ГІГ (latitude) Г·ГҐГ°ГҐГ§ ГЇГ°Г®ГЎГҐГ«).
+        # ГЏГ®Г±Г¬Г®ГІГ°ГҐГІГј ГЇГ®Г¤Г°Г®ГЎГ­Г®ГҐ Г®ГЇГЁГ±Г Г­ГЁГҐ JSON-Г®ГІГўГҐГІГ  Г¬Г®Г¦Г­Г®
+        # Гў Г¤Г®ГЄГіГ¬ГҐГ­ГІГ Г¶ГЁГЁ ГЇГ® Г Г¤Г°ГҐГ±Гі
         # https://tech.yandex.ru/maps/geocoder/
         coordinates_str = json['response']['GeoObjectCollection'][
             'featureMember'][0]['GeoObject']['Point']['pos']
-        # Превращаем string в список, так как точка - 
-        # это пара двух чисел - координат
+        # ГЏГ°ГҐГўГ°Г Г№Г ГҐГ¬ string Гў Г±ГЇГЁГ±Г®ГЄ, ГІГ ГЄ ГЄГ ГЄ ГІГ®Г·ГЄГ  - 
+        # ГЅГІГ® ГЇГ Г°Г  Г¤ГўГіГµ Г·ГЁГ±ГҐГ« - ГЄГ®Г®Г°Г¤ГЁГ­Г ГІ
         long, lat = map(float, coordinates_str.split())
-        # Вернем ответ
+        # Г‚ГҐГ°Г­ГҐГ¬ Г®ГІГўГҐГІ
         return long, lat
     except Exception as e:
         return e
@@ -41,16 +40,37 @@ def get_country(city_name):
             'format': 'json'
         }
         data = requests.get(url, params).json()
-        # все отличие тут, мы получаем имя страны
+        # ГўГ±ГҐ Г®ГІГ«ГЁГ·ГЁГҐ ГІГіГІ, Г¬Г» ГЇГ®Г«ГіГ·Г ГҐГ¬ ГЁГ¬Гї Г±ГІГ°Г Г­Г»
         return data['response']['GeoObjectCollection']['featureMember'][0][
             'GeoObject']['metaDataProperty']['GeocoderMetaData'][
             'AddressDetails']['Country']['CountryName']
     except Exception as e:
         return e   
-    
-    
+     
+def get_info(city_name, type_info):
+    if type_info == city_name:
+        try:
+            url = "https://geocode-maps.yandex.ru/1.x/"
+            params = {'geocode': city_name, 'format': 'json'}
+            data = requests.get(url, params).json()
+            return data['response']['GeoObjectCollection']['featureMember'][0]['GeoObject']['metaDataProperty']['GeocoderMetaData']['AddressDetails']['Country']['CountryName']
+        except Exception as e:
+            return e  
+        else:
+            try:
+                url = "https://geocode-maps.yandex.ru/1.x/"
+                params = {'geocode': city_name, 'format': 'json'}
+                response = requests.get(url, params)
+                json = response.json()
+                coordinates_str = json['response']['GeoObjectCollection'][
+                'featureMember'][0]['GeoObject']['Point']['pos']
+                long, lat = map(float, coordinates_str.split())
+                return long, lat
+            except Exception as e:
+                return e
+             
 def get_distance(p1, p2):
-    # p1 и p2 - это кортежи из двух элементов - координаты точек
+    # p1 ГЁ p2 - ГЅГІГ® ГЄГ®Г°ГІГҐГ¦ГЁ ГЁГ§ Г¤ГўГіГµ ГЅГ«ГҐГ¬ГҐГ­ГІГ®Гў - ГЄГ®Г®Г°Г¤ГЁГ­Г ГІГ» ГІГ®Г·ГҐГЄ
     radius = 6373.0
  
     lon1 = math.radians(p1[0])
