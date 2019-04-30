@@ -2,46 +2,47 @@ from flask import Flask, request
 import logging
 import json
 from geo import get_country, get_distance, get_coordinates
- 
 app = Flask(__name__)
-logging.basicConfig(level=logging.INFO, filename='app.log',
-                    format='%(asctime)s %(levelname)s %(name)s %(message)s')
-  
+logging.basicConfig(level=logging.INFO, filename='app.log', format='%(asctime)s %(levelname)s %(name)s %(message)s')
+
 @app.route('/post', methods=['POST'])
 def main():
     logging.info('Request: %r', request.json)
-    response = {
-        'session': request.json['session'],
-        'version': request.json['version'],
-        'response': {
-            'end_session': False
-        }
-    }
+    response = {'session': request.json['session'],
+                'version': request.json['version'],
+                'response': {'end_session': False}}
     handle_dialog(response, request.json)
     logging.info('Request: %r', response)
     return json.dumps(response)
  
- 
 def handle_dialog(res, req):
     user_id = req['session']['user_id']
     if req['session']['new']:
-        res['response']['text'] = \
-            'Ïðèâåò! ß ìîãó ïîêàçàòü ãîðîä èëè ñêàçàòü ðàññòîÿíèå ìåæäó ãîðîäàìè!'
+        res['response']['text'] = 'Привет! Назови своё имя!'
+        sessionStorage[user_id] = {'first_name': None,}
         return
-    cities = get_cities(req)
-    if not cities:
-        res['response']['text'] = 'Òû íå íàïèñàë íàçâàíèå íå îäíîãî ãîðîäà!'
-    elif len(cities) == 1:
-        res['response']['text'] = 'Ýòîò ãîðîä â ñòðàíå - ' + \
-            get_country(cities[0])
-    elif len(cities) == 2:
-        distance = get_distance(get_coordinates(
-            cities[0]), get_coordinates(cities[1]))
-        res['response']['text'] = 'Ðàññòîÿíèå ìåæäó ýòèìè ãîðîäàìè: ' + \
-            str(round(distance)) + ' êì.'
+    if sessionStorage[user_id]['first_name'] is None:
+        first_name = get_first_name(req)
+        if first_name is None:
+            res['response']['text'] = 'Не расслышала имя. Повтори, пожалуйста!'
+        else:
+            sessionStorage[user_id]['first_name'] = first_name
+            sessionStorage[user_id]['guessed_cities'] = []
+            res['response']['text'] = f'Приятно познакомиться, {first_name.title()}. Я Алиса. Я могу показать город или сказать расстояние между городами!'
     else:
-        res['response']['text'] = 'Ñëèøêîì ìíîãî ãîðîäîâ!'
- 
+        cities = get_cities(req)
+        if not cities:
+            res['response']['text'] = sessionStorage[user_id]['first_name'] + ', ты не написал название не одного города!'
+        elif len(cities) == 1:
+            res['response']['text'] = 'Этот город в стране - ' + \
+                get_country(cities[0])
+        elif len(cities) == 2:
+            distance = get_distance(get_coordinates(
+                cities[0]), get_coordinates(cities[1]))
+            res['response']['text'] = 'Расстояние между этими городами: ' + \
+                str(round(distance)) + ' км.'
+        else:
+            res['response']['text'] = sessionStorage[user_id]['first_name'] + ', cлишком много городов!'
  
 def get_cities(req):
     cities = []
